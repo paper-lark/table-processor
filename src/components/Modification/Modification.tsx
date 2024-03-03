@@ -2,28 +2,34 @@ import {Button, Card, Tabs, TextInput} from '@gravity-ui/uikit';
 import block from 'bem-cn-lite';
 
 import './Modification.scss';
-import React, {useState} from 'react';
+import React, {useMemo, useState} from 'react';
 import {FormulaModificationSpec, ModificationSpec} from '../../utils/modification';
 
 const b = block('modification');
 
 type FormulaModificationProps = {
     className: string | undefined;
-    applyModification: (spec: FormulaModificationSpec) => void;
+    applyModification: (spec: FormulaModificationSpec) => boolean;
+    validateModification: (spec: FormulaModificationSpec) => boolean;
 };
 
 const FormulaModification: React.FC<FormulaModificationProps> = ({
     className,
     applyModification,
+    validateModification,
 }) => {
     const [formula, setFormula] = useState('');
-    const onClick = () => {
-        applyModification({
-            type: 'formula',
-            formula,
-        });
-        setFormula('');
+    const modification: FormulaModificationSpec = {
+        type: 'formula',
+        formula,
     };
+    const onClick = () => {
+        if (applyModification(modification)) {
+            setFormula('');
+        }
+    };
+    const isFormulaValid = useMemo(() => validateModification(modification), [formula]);
+    const shouldShowError = !isFormulaValid && formula.length > 0;
 
     return (
         <div className={className + ' ' + b('container')}>
@@ -32,17 +38,25 @@ const FormulaModification: React.FC<FormulaModificationProps> = ({
                 placeholder="= SUM(A1)"
                 onChange={(e) => setFormula(e.target.value)}
                 value={formula}
+                validationState={shouldShowError ? 'invalid' : undefined}
+                errorMessage="Formula is invalid"
             ></TextInput>
-            <Button onClick={onClick}>Apply</Button>
+            <Button onClick={onClick} disabled={!isFormulaValid}>
+                Apply
+            </Button>
         </div>
     );
 };
 
 export type ModificationProps = {
-    applyModification: (spec: ModificationSpec) => void;
+    applyModification: (spec: ModificationSpec) => boolean;
+    validateModification: (spec: ModificationSpec) => boolean;
 };
 
-export const Modification: React.FC<ModificationProps> = ({applyModification}) => {
+export const Modification: React.FC<ModificationProps> = ({
+    applyModification,
+    validateModification,
+}) => {
     // const [formulaResult, setFormulaResult] = useState<CellValue | undefined>(undefined);
     // const evaluateFormula = useCallback(() => {
     //     const evaluated = HyperFormula.buildFromArray(
@@ -74,6 +88,7 @@ export const Modification: React.FC<ModificationProps> = ({applyModification}) =
             <FormulaModification
                 className={b(activeTab === 'formula' ? 'active' : 'hidden')}
                 applyModification={applyModification}
+                validateModification={validateModification}
             />
         </Card>
     );

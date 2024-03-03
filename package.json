@@ -11,6 +11,7 @@
         "@gravity-ui/react-data-table": "^1.2.0",
         "@gravity-ui/stylelint-config": "^4.0.1",
         "@gravity-ui/tsconfig": "^1.0.0",
+        "@gravity-ui/ui-logger": "^1.1.0",
         "@gravity-ui/uikit": "^6.1.1",
         "@types/node": "^20.11.20",
         "@types/react": "^18.2.60",
