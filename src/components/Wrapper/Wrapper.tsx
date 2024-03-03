@@ -1,6 +1,13 @@
 import React from 'react';
 import block from 'bem-cn-lite';
-import {Button, Icon, Theme, ThemeProvider, ToasterProvider} from '@gravity-ui/uikit';
+import {
+    Button,
+    Icon,
+    Theme,
+    ThemeProvider,
+    ToasterProvider,
+    Text as UIText,
+} from '@gravity-ui/uikit';
 import {Moon, Sun} from '@gravity-ui/icons';
 
 import './Wrapper.scss';
@@ -38,7 +45,9 @@ export const Wrapper: React.FC<AppProps> = ({children}) => {
                         </Button>
                     </div>
                     <div className={b('layout')}>
-                        <div className={b('header')}></div>
+                        <div className={b('header')}>
+                            <UIText variant="header-1">Table processor</UIText>
+                        </div>
                         <div className={b('content')}>{children}</div>
                     </div>
                 </div>

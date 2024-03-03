@@ -1,4 +1,4 @@
-import {Button, Card, Tabs, TextInput} from '@gravity-ui/uikit';
+import {Button, Card, Tabs, TextInput, Text as UIText} from '@gravity-ui/uikit';
 import block from 'bem-cn-lite';
 
 import './Modification.scss';
@@ -9,18 +9,21 @@ const b = block('modification');
 
 type FormulaModificationProps = {
     className: string | undefined;
+    modificationName: string;
     applyModification: (spec: FormulaModificationSpec) => boolean;
     validateModification: (spec: FormulaModificationSpec) => boolean;
 };
 
 const FormulaModification: React.FC<FormulaModificationProps> = ({
     className,
+    modificationName,
     applyModification,
     validateModification,
 }) => {
     const [formula, setFormula] = useState('');
     const modification: FormulaModificationSpec = {
         type: 'formula',
+        modificationName,
         formula,
     };
     const onClick = () => {
@@ -30,18 +33,19 @@ const FormulaModification: React.FC<FormulaModificationProps> = ({
     };
     const isFormulaValid = useMemo(() => validateModification(modification), [formula]);
     const shouldShowError = !isFormulaValid && formula.length > 0;
+    const isButtonActive = isFormulaValid && modificationName.length > 0;
 
     return (
         <div className={className + ' ' + b('container')}>
             <TextInput
-                label="Formula"
+                label="Formula:"
                 placeholder="= SUM(A1)"
                 onChange={(e) => setFormula(e.target.value)}
                 value={formula}
                 validationState={shouldShowError ? 'invalid' : undefined}
                 errorMessage="Formula is invalid"
             ></TextInput>
-            <Button onClick={onClick} disabled={!isFormulaValid}>
+            <Button onClick={onClick} disabled={!isButtonActive}>
                 Apply
             </Button>
         </div>
@@ -57,28 +61,25 @@ export const Modification: React.FC<ModificationProps> = ({
     applyModification,
     validateModification,
 }) => {
-    // const [formulaResult, setFormulaResult] = useState<CellValue | undefined>(undefined);
-    // const evaluateFormula = useCallback(() => {
-    //     const evaluated = HyperFormula.buildFromArray(
-    //         data.map((a) => [...a, formula]),
-    //         {
-    //             licenseKey: 'gpl-v3',
-    //         },
-    //     );
-    //     const result = evaluated.getCellValue({col: data[0].length, row: 0, sheet: 0});
-    //     evaluated.destroy();
-    //     setFormulaResult(result);
-    // }, [data, formula, setFormulaResult]);
-
     const tabs = [
         {id: 'formula', title: 'Apply formula'},
         {id: 'drop_columns', title: 'Drop columns'},
         {id: 'filter_rows', title: 'Filter rows'},
     ];
     const [activeTab, setActiveTab] = useState(tabs[0].id);
+    const [name, setName] = useState('');
 
     return (
         <Card className={b()} view="outlined">
+            <UIText whiteSpace="nowrap" variant="subheader-2" className={b('title')}>
+                Modification
+            </UIText>
+            <TextInput
+                label="Name:"
+                placeholder="Modification name"
+                onChange={(e) => setName(e.target.value)}
+                value={name}
+            ></TextInput>
             <Tabs
                 className={b('tabs')}
                 activeTab={activeTab}
@@ -87,6 +88,7 @@ export const Modification: React.FC<ModificationProps> = ({
             />
             <FormulaModification
                 className={b(activeTab === 'formula' ? 'active' : 'hidden')}
+                modificationName={name}
                 applyModification={applyModification}
                 validateModification={validateModification}
             />

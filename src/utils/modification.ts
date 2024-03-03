@@ -1,8 +1,10 @@
+import logger from '@gravity-ui/ui-logger';
 import {DetailedCellError, HyperFormula, RawCellContent} from 'hyperformula';
 
 export type FormulaModificationSpec = {
     type: 'formula';
     formula: string;
+    modificationName: string;
     // TODO: range: [number, number];
 };
 
@@ -22,10 +24,15 @@ export const createFormulaValidator = (data: RawCellContent[][]): FormulaValidat
     };
 };
 
+export type ModificationError = {
+    message: string;
+    type: string;
+};
+
 export const applyModificationSpec = (
     data: RawCellContent[][],
     spec: ModificationSpec,
-): [RawCellContent[][], DetailedCellError | undefined] => {
+): [RawCellContent[][], ModificationError | undefined] => {
     switch (spec.type) {
         case 'formula': {
             const hfInstance = createHFInstance(
@@ -41,6 +48,7 @@ export const applyModificationSpec = (
             const modifiedData = data.map((row, i) => {
                 const value = hfInstance.getCellValue({col: row.length, row: i, sheet: 0});
                 if (value instanceof DetailedCellError) {
+                    logger.logError(`Failed to apply formula: ${value}`);
                     error = value;
                     return [...row, ''];
                 }
@@ -52,6 +60,6 @@ export const applyModificationSpec = (
             return [modifiedData, error];
         }
         default:
-            return [data, undefined];
+            return [[], {type: 'INIMPLEMENTED', message: `Unsupported modification: ${spec}`}];
     }
 };

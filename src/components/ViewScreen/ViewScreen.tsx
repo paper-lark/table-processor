@@ -1,6 +1,6 @@
-import {Container, ToastProps, useToaster} from '@gravity-ui/uikit';
+import {ToastProps, useToaster} from '@gravity-ui/uikit';
 import {useEffect, useMemo, useState} from 'react';
-import {CellValue, RawCellContent} from 'hyperformula';
+import {RawCellContent} from 'hyperformula';
 import {generateData} from '../..//utils/data';
 import {TableCard} from '../../components/TableCard';
 import {Modification} from '../../components/Modification';
@@ -9,6 +9,7 @@ import {
     applyModificationSpec,
     createFormulaValidator,
 } from '../../utils/modification';
+import {Canvas} from '../Canvas';
 
 export type ViewScreenProps = {};
 
@@ -19,13 +20,14 @@ export const ViewScreen: React.FC<ViewScreenProps> = () => {
     // state
     const [modifications, setModifications] = useState<ModificationSpec[]>([]);
     const [modifiedData, setModifiedData] = useState<RawCellContent[][]>(originalData);
+    const [modifiedName, setModifiedName] = useState('Modified data');
     const [errorToast, setErrorToast] = useState<ToastProps | undefined>(undefined);
     const applyModification = (spec: ModificationSpec): boolean => {
         const [modified, error] = applyModificationSpec(modifiedData, spec);
         if (error) {
             setErrorToast({
                 name: 'formula error',
-                title: `Failed to apply formula: ${error.message}`,
+                title: `Failed to apply formula: [${error.type}] ${error.message}`,
                 theme: 'warning',
                 isClosable: true,
             });
@@ -33,6 +35,7 @@ export const ViewScreen: React.FC<ViewScreenProps> = () => {
         } else {
             setModifiedData(modified);
             setModifications([...modifications, spec]);
+            setModifiedName(spec.modificationName);
             return true;
         }
     };
@@ -57,14 +60,14 @@ export const ViewScreen: React.FC<ViewScreenProps> = () => {
     }, [modifiedData]);
 
     return (
-        <Container style={{display: 'flex', padding: 20, gap: 20}}>
-            <TableCard data={originalData}></TableCard>
+        <Canvas>
+            <TableCard name="Original data" data={originalData}></TableCard>
             <Modification
                 applyModification={applyModification}
                 validateModification={validateModification}
             />
-            <TableCard data={modifiedData as CellValue[][]}></TableCard>
-        </Container>
+            <TableCard name={modifiedName} data={modifiedData}></TableCard>
+        </Canvas>
     );
 };
 

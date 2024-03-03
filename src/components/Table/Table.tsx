@@ -1,10 +1,10 @@
 import DataTable, {Column} from '@gravity-ui/react-data-table';
-import {CellValue} from 'hyperformula';
+import {RawCellContent} from 'hyperformula';
 import {YCLOUD_THEME} from '@gravity-ui/react-data-table/build/esm/lib/constants';
 import {generateColumnNames} from '../../utils/columns';
 
 export type TableProps = {
-    data: CellValue[][];
+    data: RawCellContent[][];
 };
 
 export const Table: React.FC<TableProps> = ({data}) => {
