@@ -1,7 +1,5 @@
-import {ToastProps, useToaster} from '@gravity-ui/uikit';
+import {Flex, useToaster} from '@gravity-ui/uikit';
 import {useEffect, useMemo, useState} from 'react';
-import {RawCellContent} from 'hyperformula';
-import {generateData} from '../..//utils/data';
 import {TableCard} from '../../components/TableCard';
 import {Modification} from '../../components/Modification';
 import {
@@ -10,63 +8,147 @@ import {
     createFormulaValidator,
 } from '../../utils/modification';
 import {Canvas} from '../Canvas';
+import {
+    ModificationHistory,
+    NamedTable,
+    applyModificationHistory,
+    removeHistoryEntry,
+} from '../../utils/history';
+import {range} from '../../utils/range';
+import {stubInputData, stubModificationHistory} from '../../utils/stub';
+import Xarrow, {Xwrapper} from 'react-xarrows';
 
 export type ViewScreenProps = {};
 
 export const ViewScreen: React.FC<ViewScreenProps> = () => {
     // input
-    const originalData = useMemo(() => generateData(10), []);
+    const inputData = stubInputData;
 
-    // state
-    const [modifications, setModifications] = useState<ModificationSpec[]>([]);
-    const [modifiedData, setModifiedData] = useState<RawCellContent[][]>(originalData);
-    const [modifiedName, setModifiedName] = useState('Modified data');
-    const [errorToast, setErrorToast] = useState<ToastProps | undefined>(undefined);
+    // history state
+    const [history, setHistory] = useState<ModificationHistory>(stubModificationHistory);
+
+    // calculate tables from history
+    const {add: addToast} = useToaster();
+    const [tables, initError] = useMemo(
+        () => applyModificationHistory(inputData, history),
+        [inputData],
+    );
+    useEffect(() => {
+        if (initError) {
+            addToast({
+                name: initError.type,
+                title: `Failed to apply history: ${initError.message}`,
+                theme: 'warning',
+                isClosable: true,
+            });
+        }
+    }, [initError]);
+
+    // create callbacks
     const applyModification = (spec: ModificationSpec): boolean => {
-        const [modified, error] = applyModificationSpec(modifiedData, spec);
-        if (error) {
-            setErrorToast({
+        const [nt, applyError] = applyModificationSpec(tables[0].table, spec);
+        if (applyError) {
+            addToast({
                 name: 'formula error',
-                title: `Failed to apply formula: [${error.type}] ${error.message}`,
+                title: `Failed to apply formula: [${applyError.type}] ${applyError.message}`,
                 theme: 'warning',
                 isClosable: true,
             });
             return false;
         } else {
-            setModifiedData(modified);
-            setModifications([...modifications, spec]);
-            setModifiedName(spec.modificationName);
+            const newHistory: ModificationHistory = {
+                modifications: [
+                    ...history.modifications,
+                    {
+                        type: 'operation',
+                        inputs: [0], // TODO: set correct value
+                        spec,
+                    },
+                ],
+            };
+            setHistory(newHistory);
+            tables.push({name: spec.modificationName, table: nt});
             return true;
         }
     };
-
-    // toaster
-    const {add: addToast} = useToaster();
-    useEffect(() => {
-        if (errorToast) {
-            addToast(errorToast);
-        }
-    }, [errorToast]);
-
-    // callbacks
     const validateModification = useMemo(() => {
-        const formulaValidator = createFormulaValidator(modifiedData);
+        const formulaValidator = createFormulaValidator(tables[0].table);
         return (spec: ModificationSpec): boolean => {
             if (spec.type === 'formula') {
                 return formulaValidator(spec.formula);
             }
             return true;
         };
-    }, [modifiedData]);
+    }, [tables[0].table]);
+    const removeTable = (i: number) => {
+        const [newHistory, error] = removeHistoryEntry(history, i);
+        if (error) {
+            addToast({
+                name: error.type,
+                title: `Failed to remove table: ${error.message}`,
+                theme: 'warning',
+                isClosable: true,
+            });
+        } else {
+            setHistory(newHistory);
+            tables.splice(i, 1);
+        }
+    };
 
+    // organize tables
+    const tablesByColumn = Array(history.modifications.length).fill(0);
+    history.modifications.forEach((entry, i) => {
+        if (entry.type === 'operation') {
+            tablesByColumn[i] = Math.max(...entry.inputs.map((input) => tablesByColumn[input])) + 1;
+        }
+    });
+
+    // render
     return (
         <Canvas>
-            <TableCard name="Original data" data={originalData}></TableCard>
             <Modification
                 applyModification={applyModification}
                 validateModification={validateModification}
             />
-            <TableCard name={modifiedName} data={modifiedData}></TableCard>
+            <Xwrapper>
+                <Flex direction="row" gap="10">
+                    {range(0, Math.max(...tablesByColumn) + 1, 1).map((i) => (
+                        <Flex direction="column" key={i} gap="10">
+                            {tables
+                                .map<[NamedTable, number]>((t, n) => [t, n])
+                                .filter((_, j) => tablesByColumn[j] === i)
+                                .map(([t, n]) => (
+                                    <TableCard
+                                        id={`table-${n}`}
+                                        key={n}
+                                        name={t.name}
+                                        data={t.table}
+                                        onCreateModification={() => {}}
+                                        onDelete={() => removeTable(n)}
+                                    ></TableCard>
+                                ))}
+                        </Flex>
+                    ))}
+                </Flex>
+                {history.modifications.flatMap((entry, j) => {
+                    if (entry.type === 'operation') {
+                        return entry.inputs.map((i) => (
+                            <div style={{position: 'relative'}}>
+                                <Xarrow
+                                    key={`${j}-${i}`}
+                                    color="var(--g-color-base-brand)"
+                                    start={`table-${i}`}
+                                    end={`table-${j}`}
+                                    strokeWidth={2}
+                                    headSize={6}
+                                    curveness={1}
+                                />
+                            </div>
+                        ));
+                    }
+                    return [];
+                })}
+            </Xwrapper>
         </Canvas>
     );
 };

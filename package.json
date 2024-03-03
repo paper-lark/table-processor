@@ -6,7 +6,6 @@
         "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
         "@gravity-ui/browserslist-config": "^4.3.0",
         "@gravity-ui/eslint-config": "^3.1.1",
-        "@gravity-ui/icons": "^2.9.0",
         "@gravity-ui/prettier-config": "^1.1.0",
         "@gravity-ui/react-data-table": "^1.2.0",
         "@gravity-ui/stylelint-config": "^4.0.1",
@@ -26,6 +25,7 @@
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-scripts": "5.0.1",
+        "react-xarrows": "^2.0.2",
         "sass": "^1.71.1",
         "sass-loader": "^13.3.3",
         "stylelint": "^15.11.0",
@@ -65,5 +65,8 @@
     },
     "overrides": {
         "typescript": "^5.3.3"
+    },
+    "devDependencies": {
+        "@gravity-ui/icons": "^2.9.1"
     }
 }

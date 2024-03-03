@@ -60,6 +60,6 @@ export const applyModificationSpec = (
             return [modifiedData, error];
         }
         default:
-            return [[], {type: 'INIMPLEMENTED', message: `Unsupported modification: ${spec}`}];
+            return [[], {type: 'UNIMPLEMENTED', message: `Unsupported modification: ${spec}`}];
     }
 };
