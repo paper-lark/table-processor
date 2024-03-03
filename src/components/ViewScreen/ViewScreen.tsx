@@ -1,12 +1,7 @@
-import {Flex, useToaster} from '@gravity-ui/uikit';
+import {Flex, Modal, useToaster} from '@gravity-ui/uikit';
 import {useEffect, useMemo, useState} from 'react';
 import {TableCard} from '../../components/TableCard';
-import {Modification} from '../../components/Modification';
-import {
-    ModificationSpec,
-    applyModificationSpec,
-    createFormulaValidator,
-} from '../../utils/modification';
+import {ModificationSpec, applyModificationSpec} from '../../utils/modification';
 import {Canvas} from '../Canvas';
 import {
     ModificationHistory,
@@ -17,6 +12,7 @@ import {
 import {range} from '../../utils/range';
 import {stubInputData, stubModificationHistory} from '../../utils/stub';
 import Xarrow, {Xwrapper} from 'react-xarrows';
+import {CreateModificationScreen} from '../CreateModificationScreen';
 
 export type ViewScreenProps = {};
 
@@ -45,8 +41,10 @@ export const ViewScreen: React.FC<ViewScreenProps> = () => {
     }, [initError]);
 
     // create callbacks
-    const applyModification = (spec: ModificationSpec): boolean => {
-        const [nt, applyError] = applyModificationSpec(tables[0].table, spec);
+    const [modifiedTable, setModifiedTable] = useState<number | undefined>(undefined);
+    const resetModifiedTable = () => setModifiedTable(undefined);
+    const applyModification = (modifiedTable: number, spec: ModificationSpec): boolean => {
+        const [nt, applyError] = applyModificationSpec(tables[modifiedTable].table, spec);
         if (applyError) {
             addToast({
                 name: 'formula error',
@@ -61,25 +59,17 @@ export const ViewScreen: React.FC<ViewScreenProps> = () => {
                     ...history.modifications,
                     {
                         type: 'operation',
-                        inputs: [0], // TODO: set correct value
+                        inputs: [modifiedTable],
                         spec,
                     },
                 ],
             };
             setHistory(newHistory);
             tables.push({name: spec.modificationName, table: nt});
+            resetModifiedTable();
             return true;
         }
     };
-    const validateModification = useMemo(() => {
-        const formulaValidator = createFormulaValidator(tables[0].table);
-        return (spec: ModificationSpec): boolean => {
-            if (spec.type === 'formula') {
-                return formulaValidator(spec.formula);
-            }
-            return true;
-        };
-    }, [tables[0].table]);
     const removeTable = (i: number) => {
         const [newHistory, error] = removeHistoryEntry(history, i);
         if (error) {
@@ -106,10 +96,15 @@ export const ViewScreen: React.FC<ViewScreenProps> = () => {
     // render
     return (
         <Canvas>
-            <Modification
-                applyModification={applyModification}
-                validateModification={validateModification}
-            />
+            <Modal open={modifiedTable !== undefined} onClose={resetModifiedTable}>
+                {modifiedTable === undefined ? undefined : (
+                    <CreateModificationScreen
+                        table={tables[modifiedTable]}
+                        onApplyModification={(spec) => applyModification(modifiedTable, spec)}
+                        onClose={resetModifiedTable}
+                    ></CreateModificationScreen>
+                )}
+            </Modal>
             <Xwrapper>
                 <Flex direction="row" gap="10">
                     {range(0, Math.max(...tablesByColumn) + 1, 1).map((i) => (
@@ -123,7 +118,7 @@ export const ViewScreen: React.FC<ViewScreenProps> = () => {
                                         key={n}
                                         name={t.name}
                                         data={t.table}
-                                        onCreateModification={() => {}}
+                                        onCreateModification={() => setModifiedTable(n)}
                                         onDelete={() => removeTable(n)}
                                     ></TableCard>
                                 ))}

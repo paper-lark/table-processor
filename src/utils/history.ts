@@ -70,14 +70,16 @@ export const removeHistoryEntry = (
 
     // check that removed element is the last one
     for (const entry of history.modifications) {
-        if (entry.type === 'operation' && removedEntry in entry.inputs) {
-            return [
-                history,
-                {
-                    type: 'INVALID_ARGUMENT',
-                    message: `Cannot remove non leaf entry #${removedEntry}`,
-                },
-            ];
+        if (entry.type === 'operation') {
+            if (entry.inputs.includes(removedEntry)) {
+                return [
+                    history,
+                    {
+                        type: 'INVALID_ARGUMENT',
+                        message: `Cannot remove non-leaf entry #${removedEntry}`,
+                    },
+                ];
+            }
         }
     }
 

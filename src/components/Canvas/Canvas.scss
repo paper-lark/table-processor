@@ -3,7 +3,8 @@ $block: '.canvas';
 #{$block} {
     display: inline-block;
     overflow: scroll;
-    border: 1px solid var(--g-color-base-brand);
+    border: 1px solid var(--g-color-base-generic-medium);
+    box-sizing: border-box;
 
     width: 100%;
     height: 70vh;

@@ -1,4 +1,4 @@
-import {Button, Card, Tabs, TextInput, Text as UIText} from '@gravity-ui/uikit';
+import {Button, Flex, Tabs, TextInput, Text as UIText} from '@gravity-ui/uikit';
 import block from 'bem-cn-lite';
 
 import './Modification.scss';
@@ -45,7 +45,7 @@ const FormulaModification: React.FC<FormulaModificationProps> = ({
                 validationState={shouldShowError ? 'invalid' : undefined}
                 errorMessage="Formula is invalid"
             ></TextInput>
-            <Button onClick={onClick} disabled={!isButtonActive}>
+            <Button onClick={onClick} disabled={!isButtonActive} view="action">
                 Apply
             </Button>
         </div>
@@ -70,7 +70,7 @@ export const Modification: React.FC<ModificationProps> = ({
     const [name, setName] = useState('');
 
     return (
-        <Card className={b()} view="outlined">
+        <Flex direction="column" gap={4} className={b()}>
             <UIText whiteSpace="nowrap" variant="subheader-2" className={b('title')}>
                 Modification
             </UIText>
@@ -92,7 +92,7 @@ export const Modification: React.FC<ModificationProps> = ({
                 applyModification={applyModification}
                 validateModification={validateModification}
             />
-        </Card>
+        </Flex>
     );
 };
 
